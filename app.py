@@ -62,9 +62,9 @@ def buy():
         if quote == None:
             return apology("Not existing symbol")
         shares = request.form.get("shares")
-        print(shares)
-        if shares == None or int(shares) < 1:
+        if shares == None or int(shares) < 1 or float(shares) != int(shares):
             return apology("Invalid share (must be > 0)")
+
         fundsavailable = db.execute("SELECT cash FROM users where id = ?", session["user_id"])[0]["cash"]
         if fundsavailable < (quote["price"] * int(shares)):
             return apology("Not enough funds")
@@ -161,7 +161,7 @@ def register():
             return apology("Must provide password!")
 
         elif weak_password(request.form.get("password")):
-            return render_template("register.html", error="Weak password! Must contain more than 5 characters, in mixed case, have letters and numbers.")
+            return apology("Weak password! Must contain more than 5 characters, in mixed case, have letters and numbers.")
 
         elif request.form.get("password") != request.form.get("confirmation"):
             return apology("You must confirm the password")
