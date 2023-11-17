@@ -54,20 +54,22 @@ def buy():
     if request.method == "GET":
         return render_template("buy.html")
     if request.method == "POST":
-
-        symbol = request.form.get("symbol")
-        if symbol is None or len(symbol) == 0:
-            return apology("Enter symbol")
-        quote = lookup(symbol)
-        if quote == None:
-            return apology("Not existing symbol")
-        shares = request.form.get("shares")
-        if shares == None or int(shares) < 1 or float(shares) != int(shares):
-            return apology("Invalid share (must be > 0)")
-
+        try:
+            symbol = request.form.get("symbol")
+            if symbol is None or len(symbol) == 0:
+                return apology("Enter symbol")
+            quote = lookup(symbol)
+            if quote == None:
+                return apology("Not existing symbol")
+            shares = request.form.get("shares")
+            if shares == None or int(shares) < 1 or float(shares) != int(shares):
+                return apology("Invalid share (must be > 0)")
+        except ValueError:
+                return apology("Invalid share (must be integer > 0)")
         fundsavailable = db.execute("SELECT cash FROM users where id = ?", session["user_id"])[0]["cash"]
         if fundsavailable < (quote["price"] * int(shares)):
             return apology("Not enough funds")
+
         # Add purchase to database
         db.execute("INSERT INTO purchases (user_id, symbol, name, price, amount, timestamp) VALUES (?, ?, ?, ?, ?, ?)", session["user_id"], quote["symbol"], quote["name"], quote["price"], shares, datetime.datetime.now())
         db.execute("UPDATE users SET cash = ? WHERE id = ?", fundsavailable - (quote["price"] * int(shares)), session["user_id"])
