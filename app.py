@@ -154,7 +154,7 @@ def register():
     if request.method == "POST":
         # Ensure username was submitted
         if not request.form.get("username") or len(request.form.get("username")) == 0:
-            return render_template("register.html", error="Must provide username!")
+            return apology("Must provide username!")
 
         # Ensure password was submitted
         elif not request.form.get("password") or len(request.form.get("password")) == 0:
