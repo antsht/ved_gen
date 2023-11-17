@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th class="text-start">Symbol</th>
+            <th class="text-start">Name</th>
+            <th class="text-end">Shares</th>
+            <th class="text-end">Price</th>
+            <th class="text-end">Action</th>
+            <th class="text-end">Transacted</th>
+        </tr>
+    </thead>
+   <tbody>
+    {% for purchase in purchases %}
+            <tr>
+                <td class="text-start">{{ purchase.symbol }}</td>
+                <td class="text-start">{{ purchase.name }}</td>
+                <td class="text-end">{{ purchase.amount }}</td>
+                <td class="text-end">{{ purchase.price | usd }}</td>
+                <td class="text-end">{{ purchase.action }}</td>
+                <td class="text-end">{{ purchase.timestamp }}</td>
+            </tr>
+    {% endfor %}
+
+    </tbody>
+</table>
+
+
+{% endblock %}
