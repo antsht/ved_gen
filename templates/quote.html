@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block main %}
-    <div class="mb-3"> {{ quote }}</div>
+    <div class="mb-3"> {{ quote }} {{ val|usd }}</div>
     <form action="/quote" method="post">
         <div class="mb-3">
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="symbol" name="symbol" placeholder="Symbol" type="text">

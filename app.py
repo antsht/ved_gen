@@ -136,7 +136,7 @@ def logout():
 @login_required
 def quote():
     if request.method == "GET":
-        return render_template("quote.html")
+        return render_template("quote.html",quote="", val=0)
     if request.method == "POST":
         symbol = request.form.get("symbol")
         if symbol is None or len(symbol) == 0:
@@ -144,10 +144,11 @@ def quote():
 
         quote = lookup(symbol)
         if quote != None:
-            quotetext = "A share of "+ quote["name"]+" ("+ quote["symbol"]+") costs $"+ str(quote["price"])+"."
+            quotetext = "A share of "+ quote["name"]+" ("+ quote["symbol"]+") costs "
         else:
             return apology("Symbol not found.")
-        return render_template("quote.html", quote=quotetext)
+        print(quote["price"])
+        return render_template("quote.html", quote=quotetext, val=quote["price"])
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
