@@ -140,7 +140,7 @@ def quote():
     if request.method == "POST":
         symbol = request.form.get("symbol")
         if symbol is None or len(symbol) == 0:
-               return render_template("quote.html", quote="Enter symbol for lookup.")
+            return apology("Enter symbol for lookup.")
 
         quote = lookup(symbol)
         if quote != None:
@@ -158,19 +158,19 @@ def register():
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return render_template("register.html", error="Must provide password!")
+            return apology("Must provide password!")
 
         elif weak_password(request.form.get("password")):
             return render_template("register.html", error="Weak password! Must contain more than 5 characters, in mixed case, have letters and numbers.")
 
         elif request.form.get("password") != request.form.get("confirmation"):
-            return render_template("register.html", error="You must confirm the password")
+            return apology("You must confirm the password")
 
         username = request.form.get("username")
         user = db.execute("SELECT count(*) as cnt FROM users WHERE username = ?", username)
         print(user[0]["cnt"])
         if user[0]["cnt"]>0:
-            return render_template("register.html", error="User already exists.")
+            return apology("User already exists.")
         # If all checks passed - add new user
 
         pwdhash = generate_password_hash(request.form.get("password"))
