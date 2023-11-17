@@ -146,7 +146,7 @@ def quote():
         if quote != None:
             quotetext = "A share of "+ quote["name"]+" ("+ quote["symbol"]+") costs $"+ str(quote["price"])+"."
         else:
-            quotetext = "Symbol: " + symbol + " Not found"
+            return apology("Symbol not found.")
         return render_template("quote.html", quote=quotetext)
 
 @app.route("/register", methods=["GET", "POST"])
