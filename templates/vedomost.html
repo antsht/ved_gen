@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Ведомость
+{% endblock %}
+
+{% block main %}
+{% for vedomost in vedomosti %}
+<div class="container">
+    <div class="row">
+       
+       <div class="col-md-4">
+         <div class="card">
+           <div class="card-body">
+             <h5 class="card-title">Vedomost ID: {{ vedomost.id }}</h5>
+             <p class="card-text">Facultet: {{ vedomost.f_nane }}</p>
+             <p class="card-text">Group: {{ vedomost.g_name }} ({{ vedomost.group_id }})</p>
+             <p class="card-text">Discipline: {{ vedomost.discipline }}</p>
+             <p class="card-text">Control Type: {{ vedomost.control_type }}</p>
+             <p class="card-text">Hours Total: {{ vedomost.hours_total | hrs }}</p>
+             <p class="card-text">Control Date: {{ vedomost.control_date }}</p>
+             <p class="card-text">Name of Ekzaminator: {{ vedomost.name_of_ekzaminator }}</p>
+           </div>
+         </div>
+       </div>     
+    </div>
+   </div>
+   <form action="/vedomost" method="post">
+    <input type="hidden" name="id" value="{{ vedomost.id }}" /> 
+    <button class="btn btn-primary" type="submit">Get XLS</button>
+</form>
+{% endfor %}
+{% endblock %}

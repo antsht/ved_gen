@@ -1,18 +1,26 @@
 import os
 import datetime
+from sql import SQL
 
-from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, redirect, render_template, request, session, send_file
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd, weak_password
+from helpers import apology, login_required, lookup, usd, weak_password, format_hrs
+
+import openpyxl
+from openpyxl.styles import Alignment
+from openpyxl.worksheet.datavalidation import DataValidation
+import io
+
 
 # Configure application
 app = Flask(__name__)
 
 # Custom filter
 app.jinja_env.filters["usd"] = usd
+app.jinja_env.filters["hrs"] = format_hrs
+
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -20,8 +28,8 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-
+#db = SQL("sqlite:///finance.db")
+db = SQL("sqlite:///vedDB.db")
 
 @app.after_request
 def after_request(response):
@@ -32,73 +40,111 @@ def after_request(response):
     return response
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    """Show portfolio of stocks"""
-    fundsavailable = db.execute(
-        "SELECT cash FROM users where id = ?", session["user_id"]
-    )[0]["cash"]
-    purchases = db.execute(
-        "SELECT symbol, SUM(amount*action) as amount FROM purchases where user_id = ? GROUP BY symbol",
-        session["user_id"],
-    )
-    sum = 0
-    for p in purchases:
-        quote = lookup(p["symbol"])
-        p["price"] = quote["price"]
-        p["name"] = quote["name"]
-        p["total"] = quote["price"] * p["amount"]
-        sum += p["total"]
-    return render_template(
-        "index.html",
-        purchases=purchases,
-        cash=fundsavailable,
-        total=sum + fundsavailable,
-    )
-
-
-@app.route("/buy", methods=["GET", "POST"])
-@login_required
-def buy():
     if request.method == "GET":
-        return render_template("buy.html")
+        vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id;")
+        return render_template(
+            "index.html", 
+            vedomosti=vedomosti)
     if request.method == "POST":
-        try:
-            symbol = request.form.get("symbol")
-            if symbol is None or len(symbol) == 0:
-                return apology("Enter symbol")
-            quote = lookup(symbol)
-            if quote == None:
-                return apology("Not existing symbol")
-            shares = request.form.get("shares")
-            if shares == None or int(shares) < 1 or float(shares) != int(shares):
-                return apology("Invalid share (must be > 0)")
-        except ValueError:
-            return apology("Invalid share (must be integer > 0)")
-        fundsavailable = db.execute(
-            "SELECT cash FROM users where id = ?", session["user_id"]
-        )[0]["cash"]
-        if fundsavailable < (quote["price"] * int(shares)):
-            return apology("Not enough funds")
+        print(request.form.get("id"))
+        return redirect("/vedomost?id=" + request.form.get("id"))
+    
 
-        # Add purchase to database
-        db.execute(
-            "INSERT INTO purchases (user_id, symbol, name, price, amount, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-            session["user_id"],
-            quote["symbol"],
-            quote["name"],
-            quote["price"],
-            shares,
-            datetime.datetime.now(),
-        )
-        db.execute(
-            "UPDATE users SET cash = ? WHERE id = ?",
-            fundsavailable - (quote["price"] * int(shares)),
-            session["user_id"],
-        )
+@app.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload():
+    if request.method == "GET":
+        return render_template(
+            "upload.html")
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'No file part'
+        file = request.files['file']
+        if file.filename == '':
+            return 'No selected file'
+        if file:
+            wb = openpyxl.load_workbook(file)
+            ws = wb.active
+            data = ws.values
+            # process data
+            for row in data:
+                print(row)
+            return 'File uploaded successfully'
+    
+    
+@app.route("/vedomost", methods=["GET", "POST"])
+@login_required
+def vedomost():
+    if request.method == "GET":
+        if not request.args.get("id") or len(request.args.get("id")) == 0:
+            return redirect("/")
+        
+        id = int(request.args.get("id"))
+        vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
+        print(request.args.get("id"))
+        print(vedomosti)
+        return render_template(
+            "vedomost.html", 
+            vedomosti=vedomosti)
+    if request.method == "POST":
+        id=int(request.form.get("id"))
+        vedomost = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
+        header_data = [
+            ['ID', vedomost[0]["id"]],
+            ['Facultet name', vedomost[0]["f_name"]],
+            ['Group ID', vedomost[0]["group_id"]],
+            ['Group name', vedomost[0]["g_name"]],
+            ['Discipline', vedomost[0]["discipline"]],
+            ['Type', vedomost[0]["control_type"]],
+            ['Teacher', vedomost[0]["name_of_ekzaminator"]],
+            ['Hours', vedomost[0]["hours_total"]],
+            ['Date', vedomost[0]["control_date"]],
+        ]
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
 
-        return redirect("/")
+        row_number = 1
+        for header_row in header_data:
+            worksheet[f"A{row_number}"] = header_row[0]
+            worksheet[f"B{row_number}"] = header_row[1]
+            worksheet.merge_cells(f"B{row_number}:F{row_number}")
+            worksheet[f"A{row_number}"].alignment = Alignment(horizontal='right') 
+            worksheet[f"B{row_number}"].alignment = Alignment(horizontal='center') 
+
+            row_number +=1 
+
+        # Create a list of choices
+        choices = ['Result', 'Value 1', 'Value 2', 'Value 3']
+
+        # Create a Data Validation rule
+        dv = DataValidation(type="list", formula1=f'"{",".join(choices)}"', allow_blank=True)
+        
+        #dv = DataValidation(type="list", formula1='"Zachteno,Horosho,Otlichno"', allow_blank=True)
+
+        # Add the Data Validation rule to the worksheet
+        worksheet.add_data_validation(dv)
+
+        students = db.execute("SELECT students.student_number, students.full_name FROM vedomosti JOIN students ON students.group_id = vedomosti.group_id WHERE vedomosti.id = ?;", id  )
+        row_number += 2
+        stud_number = 1
+        for student in students:
+            worksheet[f"A{row_number}"] = stud_number
+            worksheet[f"B{row_number}"] = student["student_number"]
+            worksheet[f"C{row_number}"] = student["full_name"]
+            worksheet[f"D{row_number}"] = "Result"
+            dv.add(worksheet[f"D{row_number}"])
+            row_number += 1
+            stud_number += 1
+            
+
+        output = io.BytesIO()
+        workbook.save(output)
+        output.seek(0)
+        flash("XLS generated", category="message")
+        return send_file(output, download_name='output.xlsx', as_attachment=True)
 
 
 @app.route("/history")
@@ -164,27 +210,6 @@ def logout():
     return redirect("/")
 
 
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    if request.method == "GET":
-        return render_template("quote.html", quote="", val=0)
-    if request.method == "POST":
-        symbol = request.form.get("symbol")
-        if symbol is None or len(symbol) == 0:
-            return apology("Enter symbol for lookup.")
-
-        quote = lookup(symbol)
-        if quote != None:
-            quotetext = (
-                "A share of " + quote["name"] + " (" + quote["symbol"] + ") costs "
-            )
-        else:
-            return apology("Symbol not found.")
-        print(quote["price"])
-        return render_template("quote.html", quote=quotetext, val=quote["price"])
-
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -219,56 +244,3 @@ def register():
 
     else:
         return render_template("register.html")
-
-
-@app.route("/sell", methods=["GET", "POST"])
-@login_required
-def sell():
-    if request.method == "GET":
-        symbols = db.execute(
-            "SELECT DISTINCT symbol FROM purchases where user_id = ?",
-            session["user_id"],
-        )
-        return render_template("sell.html", symbols=symbols)
-    if request.method == "POST":
-        symbol = request.form.get("symbol")
-        if symbol is None or len(symbol) == 0:
-            return apology("Select symbol")
-        shares = request.form.get("shares")
-        if shares == None or int(shares) < 1:
-            return apology("Invalid amount (must be > 0)")
-
-        quote = lookup(symbol)
-        if quote == None:
-            return apology("Not existing symbol")
-
-        fundsavailable = db.execute(
-            "SELECT cash FROM users where id = ?", session["user_id"]
-        )[0]["cash"]
-
-        available = db.execute(
-            "SELECT SUM(amount * action) available FROM purchases where user_id = ? and symbol = ?",
-            session["user_id"],
-            symbol,
-        )
-        if int(shares) > available[0]["available"]:
-            return apology("Not enough shares to sell")
-
-        # Add sell transaxction to database
-        db.execute(
-            "INSERT INTO purchases (user_id, symbol, name, price, amount, timestamp, action) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            session["user_id"],
-            quote["symbol"],
-            quote["name"],
-            quote["price"],
-            shares,
-            datetime.datetime.now(),
-            -1,
-        )
-        db.execute(
-            "UPDATE users SET cash = ? WHERE id = ?",
-            fundsavailable + (quote["price"] * int(shares)),
-            session["user_id"],
-        )
-
-        return redirect("/")

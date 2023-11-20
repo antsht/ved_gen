@@ -89,6 +89,10 @@ def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
 
+def format_hrs(value):
+    """Format value as Hours."""
+    return f"{value:,.2f} Ч."
+
 
 def weak_password(password) -> bool:
     if (

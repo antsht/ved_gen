@@ -5,38 +5,41 @@
 {% endblock %}
 
 {% block main %}
+
+
     <table class="table table-striped">
         <thead>
-            <tr>
-                <th class="text-start">Symbol</th>
-                <th class="text-start">Name</th>
-                <th class="text-end">Shares</th>
-                <th class="text-end">Price</th>
-                <th class="text-end">TOTAL</th>
+            <tr><th>Печать</th>
+                <th class="text-start">Факультет</th>
+                <th class="text-start">Группа</th>
+                <th class="text-start">Дисциплина</th>
+                <th class="text-end">Вид контроля</th>
+                <th class="text-end">Часов всего</th>
+                <th class="text-end">Дата</th>
+                <th class="text-end">Экзаменатор</th>
             </tr>
         </thead>
         <tbody>
-            {% for purchase in purchases %}
+            {% for vedomost in vedomosti %}
                 <tr>
-                    <td class="text-start">{{ purchase.symbol }}</td>
-                    <td class="text-start">{{ purchase.name }}</td>
-                    <td class="text-end">{{ purchase.amount }}</td>
-                    <td class="text-end">{{ purchase.price | usd }}</td>
-                    <td class="text-end">{{ purchase.total | usd }}</td>
+                    
+                    <td class="text-start">
+                        <form action="/" method="post">
+                        <input type="hidden" name="id" value="{{ vedomost.id }}" /> 
+                        <button class="btn btn-primary" type="submit">Скачать</button>
+                        </form>
+                    </td>
+                    <td class="text-start">{{ vedomost.f_name }}</td>
+                    <td class="text-start">{{ vedomost.g_name }} ({{ vedomost.group_id }})</td>
+                    <td class="text-start">{{ vedomost.discipline }}</td>
+                    <td class="text-end">{{ vedomost.control_type }}</td>
+                    <td class="text-end">{{ vedomost.hours_total | hrs }}</td>
+                    <td class="text-end">{{ vedomost.control_date }}</td>
+                    <td class="text-end">{{ vedomost.name_of_ekzaminator }}</td>
                 </tr>
             {% endfor %}
 
         </tbody>
-        <tfoot>
-            <tr>
-                <td class="border-0 fw-bold text-end" colspan="4">Cash</td>
-                <td class="border-0 text-end">{{ cash | usd}}</td>
-            </tr>
-            <tr>
-                <td class="border-0 fw-bold text-end" colspan="4">TOTAL</td>
-                <td class="border-0 w-bold text-end">{{ total | usd}}</td>
-            </tr>
-        </tfoot>
     </table>
 
 
