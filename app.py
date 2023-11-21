@@ -43,11 +43,19 @@ def after_request(response):
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    if request.method == "GET":
+    if request.method == "GET":        
         vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id;")
-        return render_template(
-            "index.html", 
-            vedomosti=vedomosti)
+        if request.args.get("ved") is not None and len(request.args.get("ved"))>0:
+            students = db.execute("SELECT vedomosti.id, students.student_number, students.full_name, results.result FROM vedomosti LEFT JOIN groups ON groups.id = vedomosti.group_id LEFT JOIN students ON students.group_id = groups.id LEFT JOIN results ON students.id = results.student_id and vedomosti.id = results.vedomost_id WHERE vedomosti.id = ?;", request.args.get("ved") )
+            return render_template(
+                "index.html", 
+                vedomosti=vedomosti,
+                students=students)
+        else:
+            return render_template(
+                "index.html", 
+                vedomosti=vedomosti,
+                students=[])
     if request.method == "POST":
         print(request.form.get("id"))
         return redirect("/vedomost?id=" + request.form.get("id"))
@@ -70,8 +78,14 @@ def upload():
             ws = wb.active
             data = ws.values
             # process data
-            for row in data:
-                print(row)
+            for row in data:              
+                if row[0] is not None and row[1] is not None and isinstance(row[0], int) and isinstance(row[1], int) and row[3] is not None and len(row[3])>0:
+                    print(f"{row[0]}, {row[1]}, {row[3]}")
+                    res = db.execute("SELECT * FROM results WHERE vedomost_id = ? AND student_id = ?;", ws["B1"], row[1])
+                    if len(res) == 0:
+                        db.execute("INSERT INTO results (vedomost_id, student_id, result) VALUES (?,?,?);", ws["B1"], row[1], row[3]);
+                    else:
+                        db.execute("UPDATE results SET result = ? WHERE vedomost_id = ? AND student_id = ?;",row[3], ws["B1"], row[1])
             return 'File uploaded successfully'
     
     
@@ -84,8 +98,8 @@ def vedomost():
         
         id = int(request.args.get("id"))
         vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
-        print(request.args.get("id"))
-        print(vedomosti)
+        #print(request.args.get("id"))
+        #print(vedomosti)
         return render_template(
             "vedomost.html", 
             vedomosti=vedomosti)
@@ -117,7 +131,10 @@ def vedomost():
             row_number +=1 
 
         # Create a list of choices
-        choices = ['Result', 'Value 1', 'Value 2', 'Value 3']
+        choices = ['']
+        results = db.execute("SELECT name FROM sprav_result;")
+        for res in results:
+            choices.append(res["name"])        
 
         # Create a Data Validation rule
         dv = DataValidation(type="list", formula1=f'"{",".join(choices)}"', allow_blank=True)
@@ -128,13 +145,18 @@ def vedomost():
         worksheet.add_data_validation(dv)
 
         students = db.execute("SELECT students.student_number, students.full_name FROM vedomosti JOIN students ON students.group_id = vedomosti.group_id WHERE vedomosti.id = ?;", id  )
-        row_number += 2
+        row_number += 1
+        worksheet[f"A{row_number}"] = "Код ведомости"
+        worksheet[f"B{row_number}"] = "Студномер"
+        worksheet[f"C{row_number}"] = "ФИО"
+        worksheet[f"D{row_number}"] = "Результат"
+        row_number += 1
         stud_number = 1
         for student in students:
             worksheet[f"A{row_number}"] = stud_number
             worksheet[f"B{row_number}"] = student["student_number"]
             worksheet[f"C{row_number}"] = student["full_name"]
-            worksheet[f"D{row_number}"] = "Result"
+            worksheet[f"D{row_number}"] = ""
             dv.add(worksheet[f"D{row_number}"])
             row_number += 1
             stud_number += 1

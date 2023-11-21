@@ -9,7 +9,8 @@
 
     <table class="table table-striped">
         <thead>
-            <tr><th>Печать</th>
+            <tr><th class="text-end">Печать</th>
+                <th class="text-end">Список</th>
                 <th class="text-start">Факультет</th>
                 <th class="text-start">Группа</th>
                 <th class="text-start">Дисциплина</th>
@@ -23,10 +24,16 @@
             {% for vedomost in vedomosti %}
                 <tr>
                     
-                    <td class="text-start">
+                    <td  class="text-end">
                         <form action="/" method="post">
                         <input type="hidden" name="id" value="{{ vedomost.id }}" /> 
                         <button class="btn btn-primary" type="submit">Скачать</button>
+                        </form>
+                    </td>
+                    <td  class="text-end">
+                        <form action="/" method="get">
+                        <input type="hidden" name="ved" value="{{ vedomost.id }}" /> 
+                        <button class="btn btn-primary" type="submit">Список</button>
                         </form>
                     </td>
                     <td class="text-start">{{ vedomost.f_name }}</td>
@@ -40,7 +47,25 @@
             {% endfor %}
 
         </tbody>
-    </table>
+        {% if students %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="text-start">ФИО</th>
+                    <th class="text-start">Оценка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                    <tr>                        
+                        <td class="text-start">{{ student.full_name }}</td>
+                        <td class="text-start">{{ student.result }}</td>
+                    </tr>
+                {% endfor %}
+    
+            </tbody>
+        </table>
+        {% endif %}
 
 
 {% endblock %}
