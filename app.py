@@ -1,6 +1,7 @@
 import os
 import datetime
 from sql import SQL
+from database import get_vedomosti
 
 from flask import Flask, flash, redirect, render_template, request, session, send_file
 from flask_session import Session
@@ -44,7 +45,7 @@ def after_request(response):
 @login_required
 def index():
     if request.method == "GET":        
-        vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id;")
+        vedomosti = get_vedomosti()
         if request.args.get("ved") is not None and len(request.args.get("ved"))>0:
             students = db.execute("SELECT vedomosti.id, students.student_number, students.full_name, results.result FROM vedomosti LEFT JOIN groups ON groups.id = vedomosti.group_id LEFT JOIN students ON students.group_id = groups.id LEFT JOIN results ON students.id = results.student_id and vedomosti.id = results.vedomost_id WHERE vedomosti.id = ?;", request.args.get("ved") )
             return render_template(
@@ -97,7 +98,8 @@ def vedomost():
             return redirect("/")
         
         id = int(request.args.get("id"))
-        vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
+        vedomosti = get_vedomosti(id)
+        #vedomosti = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
         #print(request.args.get("id"))
         #print(vedomosti)
         return render_template(
@@ -105,7 +107,8 @@ def vedomost():
             vedomosti=vedomosti)
     if request.method == "POST":
         id=int(request.form.get("id"))
-        vedomost = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
+        vedomosti = get_vedomosti(id)
+        #vedomost = db.execute("SELECT vedomosti.id, vedomosti.group_id, vedomosti.discipline, vedomosti.control_type, vedomosti.name_of_ekzaminator, vedomosti.hours_total, vedomosti.control_date, groups.name as g_name, facultets.name as f_name FROM vedomosti LEFT JOIN groups on vedomosti.group_id = groups.id LEFT JOIN facultets ON groups.facultet = facultets.id WHERE vedomosti.id = ?;", id  )
         header_data = [
             ['ID', vedomost[0]["id"]],
             ['Facultet name', vedomost[0]["f_name"]],
