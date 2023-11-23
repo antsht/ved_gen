@@ -1,4 +1,3 @@
-import sys
 import threading
 
 # Thread-local data
@@ -52,7 +51,6 @@ class SQL(object):
         import re
         import sqlalchemy
         import sqlalchemy.orm
-        import threading
 
         # Temporary fix for missing sqlite3 module on the buildpack stack
         try:

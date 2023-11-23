@@ -2,7 +2,8 @@ import openpyxl
 import io
 from openpyxl.styles import Alignment
 from openpyxl.worksheet.datavalidation import DataValidation
-from database import get_sprav_result, get_vedomosti, get_students, update_result
+from database import get_sprav_result, get_vedomosti, get_students, update_result, update_history
+from datetime import datetime
 
 def generate_xlsx_ved(id):
     vedomost = get_vedomosti(id)
@@ -66,13 +67,29 @@ def generate_xlsx_ved(id):
     output = io.BytesIO()
     workbook.save(output)
     output.seek(0)
+
+    details = f'Ved id: {id}'
+    now = datetime.now() 
+    formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    update_history("Download", details, formatted_date_time )
+
     return output
 
 
 def upload_xlsx_ved(file):
-    workbook = openpyxl.load_workbook(file)
-    worksheet = workbook.active
-    data = worksheet.values
-    # process data
-    for row in data:
-        return update_result(ved_id=worksheet["B1"], stud_id=row[1], result=row[3])
+    try:
+        workbook = openpyxl.load_workbook(file)
+        worksheet = workbook.active
+        data = worksheet.values
+        # process data
+        ved_id=worksheet["C1"].value
+        for row in data:
+            update_result(ved_id=ved_id, stud_id=row[1], result=row[3])      
+        now = datetime.now()   
+        details = f"Ved id: {ved_id}"
+        formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        update_history("Upload", details, formatted_date_time )
+        return ved_id
+    except Exception as e:
+        print(e)
+        return False

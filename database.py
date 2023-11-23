@@ -59,3 +59,16 @@ def update_result(ved_id=None, stud_id=None, result=None):
     except Exception as e:
         print(f"An error occurred: {e}")
         return False
+
+
+def get_history():
+    return db.execute('SELECT history.id, history.action, history.details, history.dt FROM history;')
+
+
+def update_history(action, details, dt):
+    try:
+        db.execute('INSERT INTO history (action, details, dt) VALUES (?, ?, ?)', action, details, dt)
+        return True
+    except Exception as e:
+        print(f"An error in update_history() occurred: {e}")
+        return False

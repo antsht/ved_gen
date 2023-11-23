@@ -1,23 +1,16 @@
-import datetime
-import io
-import os
-
-import openpyxl
 from flask import Flask, flash, redirect, render_template, request, send_file, session
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import get_vedomosti, get_students
+from database import get_vedomosti, get_students, get_history
 from xlsxhelper import generate_xlsx_ved, upload_xlsx_ved
 from flask_session import Session
-from helpers import apology, format_hrs, login_required, lookup, usd, weak_password
-from sql import SQL
+from helpers import apology, format_hrs, login_required, weak_password
 
 # Configure application
 app = Flask(__name__)
 
 # Custom filter
-app.jinja_env.filters["usd"] = usd
 app.jinja_env.filters["hrs"] = format_hrs
 
 
@@ -26,9 +19,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configure CS50 Library to use SQLite database
-# db = SQL("sqlite:///finance.db")
-db = SQL("sqlite:///vedDB.db")
+
 
 
 @app.after_request
@@ -39,10 +30,14 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-
+#
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+    """
+    This is the main page route. It shows a list of exam templates.
+    For each template, it also shows a list of students.
+    """
     if request.method == "GET":
         vedomosti = get_vedomosti()
         if request.args.get("ved") is not None and len(request.args.get("ved")) > 0:
@@ -51,8 +46,9 @@ def index():
         else:
             return render_template("index.html", vedomosti=vedomosti, students=[])
     if request.method == "POST":
-        print(request.form.get("id"))
-        return redirect("/vedomost?id=" + request.form.get("id"))
+        id = int(request.form.get("id"))
+        xlsx_file = generate_xlsx_ved(id)        
+        return send_file(xlsx_file, download_name="output.xlsx", as_attachment=True)
 
 
 @app.route("/vedomost", methods=["GET", "POST"])
@@ -68,7 +64,8 @@ def vedomost():
         id = int(request.form.get("id"))
 
         xlsx_file = generate_xlsx_ved(id)
-        flash("XLS generated", category="message")
+        #flash(f"XLSX for vedomost #{id} was generated", category="message")
+        
         return send_file(xlsx_file, download_name="output.xlsx", as_attachment=True)
 
 
@@ -84,15 +81,18 @@ def upload():
         if file.filename == "":
             return "No selected file"
         if file:
-            if upload_xlsx_ved(file):
-                return "File uploaded successfully"
-            return "Error during processing uploaded XLSX file"
+            id=upload_xlsx_ved(file)
+            if id:
+                return redirect(f"/?ved={id}")
+            flash("There where an error during XLSX upload", category="error")
+            return redirect("/")
 
 
 @app.route("/history")
 @login_required
 def history():
-    return render_template("history.html", history_records=None)
+    history_records = get_history()
+    return render_template("history.html", history_records=history_records)
 
 
 @app.route("/login", methods=["GET", "POST"])
