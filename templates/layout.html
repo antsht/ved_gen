@@ -37,13 +37,18 @@
                         </ul>
                         <ul class="navbar-nav ms-auto mt-2">
                             <li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
-                        </ul>
+                        
                     {% else %}
                         <ul class="navbar-nav ms-auto mt-2">
-                            <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
                             <li class="nav-item"><a class="nav-link" href="/login">Log In</a></li>
-                        </ul>
+                        
                     {% endif %}
+                    {% if session["user_role"]=="admin" %}
+                   
+                        <li class="nav-item"><a class="nav-link" href="/register">Add user</a></li>
+                    
+                {% endif %}
+                    </ul>
                 </div>
             </div>
         </nav>
@@ -56,11 +61,11 @@
             </header>
         {% endif %}
 
-        <main class="container-fluid py-5 text-center mx-auto">
+        <main class="container-fluid text-center mx-auto">
             {% block main %}{% endblock %}
         </main>
 
-        <footer class="mb-5 small text-center text-muted footer fixed-bottom">
+        <footer class="small text-center text-muted footer fixed-bottom bg-white">
             On any questions contact by email <a href="mailto:antsht@gmail.com">antsht@gmail.com</a>
         </footer>
 

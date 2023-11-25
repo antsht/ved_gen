@@ -6,34 +6,49 @@
 
 {% block main %}
 
-
+<nav>
+    <ul class="pagination">
+      {% if paging.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('index', page=paging.prev_num) }}">Previous page</a>
+        </li>
+      {% endif %}
+      {% if paging.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('index', page=paging.next_num) }}">Next page</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
     <table class="table table-striped">
         <thead>
-            <tr><th class="text-end">Печать</th>
-                <th class="text-end">Список</th>
-                <th class="text-start">Факультет</th>
-                <th class="text-start">Группа</th>
-                <th class="text-start">Дисциплина</th>
-                <th class="text-end">Вид контроля</th>
-                <th class="text-end">Часов всего</th>
-                <th class="text-end">Дата</th>
-                <th class="text-end">Экзаменатор</th>
+            <tr><th class="text-center fixed-width">Download</th>
+                <th class="text-center fixed-width">Results</th>
+                <th class="text-start">Faculty</th>
+                <th class="text-start">Group</th>
+                <th class="text-start">Discipline</th>
+                <th class="text-end">Type of control</th>
+                <th class="text-end">Hours total</th>
+                <th class="text-end">Date</th>
+                <th class="text-end">Examiner</th>
             </tr>
         </thead>
         <tbody>
             {% for vedomost in vedomosti %}
                 <tr>
                     
-                    <td  class="text-end">
+                    <td  class="text-center">
                         <form action="/" method="post">
                         <input type="hidden" name="id" value="{{ vedomost.id }}" /> 
-                        <button class="btn btn-primary" type="submit">Скачать</button>
+                        <button class="btn btn-primary" type="submit">Get</button>
                         </form>
                     </td>
-                    <td  class="text-end">
+                    <td  class="text-center">
                         <form action="/" method="get">
                         <input type="hidden" name="ved" value="{{ vedomost.id }}" /> 
-                        <button class="btn btn-primary" type="submit">Список</button>
+                        
+                        <input type="hidden" name="page" value="{{ paging.curr_page }}" /> 
+                        <button class="btn btn-primary" type="submit">View</button>
                         </form>
                     </td>
                     <td class="text-start">{{ vedomost.f_name }}</td>
@@ -47,19 +62,21 @@
             {% endfor %}
 
         </tbody>
+
+
         {% if students %}
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th class="text-start">ФИО</th>
-                    <th class="text-start">Оценка</th>
+                    <th class="text-start">Full Name</th>
+                    <th class="text-start">Result</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
                     <tr>                        
                         <td class="text-start">{{ student.full_name }}</td>
-                        <td class="text-start">{{ student.result }}</td>
+                        <td class="text-start">{{ student.name }}</td>
                     </tr>
                 {% endfor %}
     

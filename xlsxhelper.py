@@ -84,7 +84,7 @@ def upload_xlsx_ved(file):
         # process data
         ved_id=worksheet["C1"].value
         for row in data:
-            update_result(ved_id=ved_id, stud_id=row[1], result=row[3])      
+            update_result(ved_id=ved_id, stud_id=row[1], result=row[3])   
         now = datetime.now()   
         details = f"Ved id: {ved_id}"
         formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")

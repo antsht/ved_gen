@@ -55,7 +55,7 @@ class SQL(object):
         # Temporary fix for missing sqlite3 module on the buildpack stack
         try:
             import sqlite3
-        except:
+        except Exception:
             pass
 
         # Require that file already exist for SQLite
@@ -83,7 +83,7 @@ class SQL(object):
                     cursor = dbapi_connection.cursor()
                     cursor.execute("PRAGMA foreign_keys=ON")
                     cursor.close()
-            except:
+            except Exception:
                 # Temporary fix for missing sqlite3 module on the buildpack stack
                 pass
 
@@ -217,7 +217,7 @@ class SQL(object):
             # Escape values
             for index, i in placeholders.items():
                 if i >= len(args):
-                    raise RuntimeError("missing value for placeholder (:{})".format(i + 1, len(args)))
+                    raise RuntimeError("missing value for placeholder (:{}{})".format(i + 1, len(args)))
                 tokens[index] = self._escape(args[i])
 
             # Check if any values unused

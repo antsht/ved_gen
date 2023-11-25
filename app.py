@@ -2,11 +2,13 @@ from flask import Flask, flash, redirect, render_template, request, send_file, s
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import get_vedomosti, get_students, get_history
+from database import get_vedomosti, get_students, get_history, get_vedomosti_pages
 from xlsxhelper import generate_xlsx_ved, upload_xlsx_ved
 from flask_session import Session
-from helpers import apology, format_hrs, login_required, weak_password
+from helpers import apology, format_hrs, login_required, admin_required, weak_password
+from sql import SQL
 
+db = SQL("sqlite:///vedDB.db")
 # Configure application
 app = Flask(__name__)
 
@@ -39,12 +41,23 @@ def index():
     For each template, it also shows a list of students.
     """
     if request.method == "GET":
-        vedomosti = get_vedomosti()
+        page = request.args.get('page', 1, type=int)
+        vedomosti = get_vedomosti(id=None, page=page)
+        pages_total = get_vedomosti_pages()
+        print(pages_total)
+        paging = {
+        "has_prev": True if page != 1 else False,
+        "has_next": True if page != pages_total else False,
+        "curr_page": page, 
+        "prev_num": page if page == 1 else page - 1,
+        "next_num": (page + 1) if page != pages_total else page
+        }
+
         if request.args.get("ved") is not None and len(request.args.get("ved")) > 0:
             students = get_students(request.args.get("ved"))
-            return render_template("index.html", vedomosti=vedomosti, students=students)
+            return render_template("index.html", vedomosti=vedomosti, paging=paging, students=students)
         else:
-            return render_template("index.html", vedomosti=vedomosti, students=[])
+            return render_template("index.html", vedomosti=vedomosti, paging=paging, students=[])
     if request.method == "POST":
         id = int(request.form.get("id"))
         xlsx_file = generate_xlsx_ved(id)        
@@ -125,6 +138,7 @@ def login():
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
+        session["user_role"] = rows[0]["role"]
 
         # Redirect user to home page
         return redirect("/")
@@ -146,6 +160,7 @@ def logout():
 
 
 @app.route("/register", methods=["GET", "POST"])
+@admin_required
 def register():
     if request.method == "POST":
         # Ensure username was submitted

@@ -1,4 +1,4 @@
-from flask import redirect, render_template, session
+from flask import redirect, render_template, session, flash
 from functools import wraps
 
 
@@ -42,10 +42,20 @@ def login_required(f):
 
     return decorated_function
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_role") is None or session.get("user_role")!='admin':
+            flash(message='Login as admin to register new users', category='info')
+            return redirect("/login")
+        return f(*args, **kwargs)
+
+    return decorated_function
+
 
 def format_hrs(value):
     """Format value as Hours."""
-    return f"{value:,.2f} Ч."
+    return f"{value:,.1f} Hrs."
 
 
 def weak_password(password) -> bool:
