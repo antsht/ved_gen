@@ -11,3 +11,6 @@ This project is built using the following technologies:
 - HTML/CSS: For structuring and styling the web pages.
 - Bootstrap: A free and open-source CSS framework for responsive, mobile-first front-end web development.
 - SQLite: A C library that provides a lightweight disk-based database.
+
+#### Author: Anton Shtern
+#### Location: Yaroslavl, Russia
