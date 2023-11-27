@@ -1,6 +1,6 @@
 # ved_gen
 # Simple Web Application for Exam Records
-#### Video Demo:  <URL HERE>
+#### Video Demo:  https://youtu.be/TXmO_qDm2HE
 #### Description:
 This is a simple web application designed for the purpose of uploading examination records in XLSX format for subsequent filling of exam results and uploading the filled records back. On the main page, a list of exams is displayed, where one can view the list of the study group and the uploaded results, as well as download the XLSX file for filling in the results. The application has two roles: admin and user, and only the admin can add new users.
 
